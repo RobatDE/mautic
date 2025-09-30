@@ -17,6 +17,8 @@ This document describes the production-grade, web-only Docker image and how to u
 - Includes MariaDB client tooling (`mariadb-admin`, `mariadb-check`) to validate DB connectivity.
 - Default `MAUTIC_RUN_INSTALLER=false` so the image does not attempt to run the Mautic installer by default.
 - If no `config/local.php` exists at runtime, the entrypoint renders it from `scripts/local.php.template` using environment variables.
+- Mirrors the full `scripts/` directory into the image at `/home/scripts/` and makes all `.sh` executables.
+- Includes the SQL dump `mautic-6.0.2.sql` at `/home/scripts/mautic-6.0.2.sql` for operational use. The image does not auto-import this file.
 
 ## Build-time parameters
 The Docker image accepts these build args (see `Dockerfile`):
@@ -62,6 +64,19 @@ Admin credentials (only used if running CLI installer):
   - Replaces placeholders with corresponding `MAUTIC_*` variables.
   - Generates `MAUTIC_SECRET_KEY` and `MAUTIC_REMEMBERME_KEY` if not provided.
 - Installer is disabled by default (`MAUTIC_RUN_INSTALLER=false`). If enabled and `local.php` is absent, runs `bin/console mautic:install`.
+
+## Included scripts and assets
+- Scripts installed on PATH:
+  - `/usr/local/bin/install_mautic.sh`
+  - `/usr/local/bin/check_mautic_install.sh`
+- Entrypoint:
+  - `/entrypoint-web.sh`
+- Mirrored scripts directory (for operational use):
+  - `/home/scripts/` (full copy of repo `scripts/` directory)
+- Template:
+  - `/usr/local/share/mautic/local.php.template`
+- SQL dump (not auto-imported):
+  - `/home/scripts/mautic-6.0.2.sql`
 
 ## Database testing tools
 Available via `mariadb-client` package:
@@ -129,6 +144,7 @@ kubectl apply -f kubernetes/mysql.yaml
 ### Ingress and Service
 - `kubernetes/mautic-service.yaml`: Exposes port 8090 → pod port 80.
 - `kubernetes/mautic-ingress.yaml`: Routes `campaign.expona.ai` to `Service/mautic:8090` (TLS configured via cert-manager).
+  - Service selector aligns with the Deployment label: `app: mautic-web`.
 
 ## Local run (for smoke tests)
 ```bash
