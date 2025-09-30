@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mautic-web
+  namespace: mautic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mautic-web
+  template:
+    metadata:
+      labels:
+        app: mautic-web
+    spec:
+      # initContainer removed; image renders config/local.php at runtime from env
+      containers:
+      - name: mautic
+        image: ghcr.io/expona-ai/mautic-web-service:6.0.2
+        # image: mautic/mautic:5.2.1-apache
+        envFrom:
+        - configMapRef:
+            name: mautic-config
+        env:
+        - name: MAUTIC_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mautic-db-secret
+              key: mysql-user-password
+        - name: MAUTIC_ADMIN_USERNAME
+          value: admin
+        - name: MAUTIC_ADMIN_EMAIL
+          value: admin@expona.ai
+        - name: MAUTIC_ADMIN_FIRSTNAME
+          value: Admin
+        - name: MAUTIC_ADMIN_LASTNAME
+          value: User
+        - name: MAUTIC_ADMIN_PASSWORD
+          value: NextExpona1234
+        - name: MAUTIC_RUN_INSTALLER
+          value: "false"
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: mautic-data
+          mountPath: /var/www/html
+      volumes:
+      - name: mautic-data
+        persistentVolumeClaim:
+          claimName: mautic-pvc
+      imagePullSecrets:
+        - name: gh-registry-credentials

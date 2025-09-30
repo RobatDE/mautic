@@ -1,0 +1,15 @@
+<?php
+$parameters = array(
+    'db_driver' => '{{DB_DRIVER}}',
+    'db_host' => '{{DB_HOST}}',
+    'db_port' => '{{DB_PORT}}',
+    'db_name' => '{{DB_NAME}}',
+    'db_user' => '{{DB_USER}}',
+    'db_password' => '{{DB_PASSWORD}}',
+    'db_table_prefix' => null,
+    'db_backup_tables' => 0,
+    'db_backup_prefix' => 'bak_',
+    'secret_key' => '{{SECRET_KEY}}',
+    'rememberme_key' => '{{REMEMBERME_KEY}}',
+    'site_url' => '{{SITE_URL}}',
+);

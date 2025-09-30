@@ -1,0 +1,10 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: expona-api-tls
+spec:
+  dnsNames:
+    - next.expona.ai
+  secretName: expona-api-tls
+  issuerRef:
+    name: letsencrypt-prod

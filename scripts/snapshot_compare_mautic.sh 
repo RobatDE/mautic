@@ -1,0 +1,64 @@
+cat > /tmp/snapshot_compare.sh <<'SH'
+#!/bin/sh
+set -eu
+
+usage() {
+  echo "Usage:"
+  echo "  $0 snapshot <OUTFILE>         # save current CONFIG/VAR/MEDIA listing"
+  echo "  $0 diff <OLD> <NEW>           # compare two snapshots"
+  exit 1
+}
+
+# Locate root quickly (same logic as above but lean)
+detect_root() {
+  for d in /var/www/html /opt/bitnami/mautic /bitnami/mautic; do
+    [ -d "$d" ] && { echo "$d"; return 0; }
+  done
+  echo /var/www/html
+}
+
+cmd="${1:-}"
+[ -z "$cmd" ] && usage
+
+case "$cmd" in
+  snapshot)
+    out="${2:-}"; [ -z "$out" ] && usage
+    ROOT="$(detect_root)"
+    CONFIG="$ROOT/config"
+    VAR="$ROOT/var"
+    MEDIA="$ROOT/media"
+    {
+      echo "# SNAPSHOT $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      echo "# ROOT=$ROOT"
+      echo "# CONFIG=$CONFIG"
+      echo "# VAR=$VAR"
+      echo "# MEDIA=$MEDIA"
+      for d in "$CONFIG" "$VAR" "$MEDIA"; do
+        [ -d "$d" ] || continue
+        find "$d" -xdev -printf "%M %u:%g %s %TY-%Tm-%Td %TH:%TM %p\n" 2>/dev/null
+      done | sort
+    } > "$out"
+    echo "Wrote $out"
+    ;;
+  diff)
+    old="${2:-}"; new="${3:-}"
+    [ -z "$old" ] || [ -z "$new" ] && usage
+    if command -v diff >/dev/null 2>&1; then
+      diff -u "$old" "$new" || true
+    else
+      echo "diff not found; falling back to comm"
+      comm -3 "$old" "$new" || true
+    fi
+    ;;
+  *)
+    usage
+    ;;
+esac
+SH
+
+chmod +x /tmp/snapshot_compare.sh
+echo "Examples:"
+echo "  /tmp/snapshot_compare.sh snapshot /tmp/before.txt"
+echo "  # run installer..."
+echo "  /tmp/snapshot_compare.sh snapshot /tmp/after.txt"
+echo "  /tmp/snapshot_compare.sh diff /tmp/before.txt /tmp/after.txt"

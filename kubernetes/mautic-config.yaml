@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mautic-config
+  namespace: mautic
+data:
+  MAUTIC_DB_HOST: mautic-db
+  MAUTIC_DB_PORT: "3306"
+  MAUTIC_DB_NAME: mautic
+  MAUTIC_DB_USER: mautic
+  MAUTIC_DB_DRIVER: pdo_mysql
+  MAUTIC_SITE_URL: "https://campaign.expona.ai"
+  PHP_MEMORY_LIMIT: "4G"
+  PHP_MAX_EXECUTION_TIME: "3600"
+  PHP_MAX_UPLOAD: "200M"
